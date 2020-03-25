@@ -28,6 +28,7 @@ class Disease:
     Keyword Arguments:
         name {string} -- The name of the disease (default: {None})
     """
+
     def __init__(self, infection_rate, mortality_rate, incubation_period_dist, illness_period_dist, name=None):
         self.infection_rate = infection_rate
         self.mortality_rate = mortality_rate
@@ -61,6 +62,8 @@ class Infection:
     """Couples disease to person when person gets sick and tracks disease progression
     """
     class Infection_State:
+        """Enumerable type for representing a state in the infection
+        """
         INCUBATION = 0
         ILLNESS = 1
         FINISHED = 2
@@ -73,12 +76,13 @@ class Infection:
 
         # Solving for event success probability given cumulative probability of death over illness time (using geometric distribution)
         # https://math.stackexchange.com/questions/2161184/solving-for-the-cdf-of-the-geometric-probability-distribution
-        # https://en.wikipedia.org/wiki/Geometric_progression#Geometric_series
         self.daily_mortality = 1 - np.exp( np.log(1 - self.disease.mortality_rate) / self.illness_period )
 
         self.status = Infection.Infection_State.INCUBATION
 
     def advance_infection(self):
+        """Advance the progress of the infection
+        """
         if self.status == Infection.Infection_State.INCUBATION:
             self.incubation_period -= 1
             if self.incubation_period <= 0:
@@ -90,6 +94,11 @@ class Infection:
                 self.status = Infection.Infection_State.FINISHED
 
     def get_recovery_time(self):
+        """Calculate Remaining Time Until Infection is Over (disregarding death)
+        
+        Returns:
+            int -- The time until the infection will change to the FINISHED state
+        """
         return self.incubation_period + self.illness_period
 
 
@@ -138,7 +147,9 @@ class Person:
         self.infection = Infection(self, disease)
         self.survival_days = geometric(self.infection.daily_mortality)
 
-    def advance_recovery(self):
+    def advance_condition(self):
+        """Advance the Person's condition in the simulation
+        """
         if self.is_infected(): 
             self.infection.advance_infection()
 
@@ -149,9 +160,6 @@ class Person:
             elif self.infection.status == Infection.Infection_State.FINISHED:
                 self.status = SIR_Status.RECOVERED
                 self.infection = None
-
-    def set_daily_interactions(self):
-        return poisson(lam=self.avg_interactions)
 
     def is_susceptible(self):
         if self.status == SIR_Status.SUSCEPTIBLE:
@@ -180,16 +188,30 @@ class Community:
         self.people = [Person(self.avg_ineractions, self.stdev_interactions) for _ in range(self.size)]
 
     def init_infected(self, num, disease):
+        """Initialize some number of people in the population to be infected
+        
+        Arguments:
+            num {int} -- The number of people to infect
+            disease {Disease} -- The disease to infect people with
+        """
         infected = choice(self.people, size=num)
         for p in infected:
             p.infect(disease)
 
-    def iterate(self):
+    def advance_time(self):
+        """Advance the community state with respect to time
+            (i.e. infections, recoveries, etc.)
+        """
         sample = choice(self.people, size=self.size, replace=False)
         self.interact([p for p in sample if p.status != SIR_Status.DEAD])
-        self.recover([p for p in sample if p.status == SIR_Status.INFECTED])
+        self.advance_conditions([p for p in sample if p.status == SIR_Status.INFECTED])
 
     def interact(self, sample):
+        """Perform interactions among the people in the sample
+        
+        Arguments:
+            sample {list} -- A list of people to interact with each other
+        """
         for p in sample:
             n_interactions = poisson(p.avg_interactions)
             interactions = choice(
@@ -200,11 +222,18 @@ class Community:
             for i in interactions:
                 p.interact(i)
 
-    def recover(self, sample):
+    def advance_conditions(self, sample):
+        """Advances the condition of each person in sample
+        
+        Arguments:
+            sample {list[Person]} -- List of Persons
+        """
         for p in sample:
-            p.advance_recovery()
+            p.advance_condition()
 
     def print_counts(self):
+        """Prints number of people currently in each state
+        """
         susceptible = len([p for p in self.people if p.status == SIR_Status.SUSCEPTIBLE])
         infected = len([p for p in self.people if p.status == SIR_Status.INFECTED])
         recovered = len([p for p in self.people if p.status == SIR_Status.RECOVERED])

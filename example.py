@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
         print(f"Iteration {i}")
         c.print_counts()
-        c.iterate()
+        c.advance_time()
 
     fn = lambda x,a,b,c: a / (1 + np.exp( -b * (x-c) ))
     popt, pcov = curve_fit(fn, timeline, infected+recovered, p0=[pop_size, 1, 1])
