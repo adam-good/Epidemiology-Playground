@@ -1,5 +1,3 @@
-# from collections import namedtuple
-
 import numpy as np
 from numpy.random import normal, uniform, poisson, geometric, choice
 
@@ -11,10 +9,6 @@ class SIR_Status:
     INFECTED = 1
     RECOVERED = 2
     DEAD = 3
-
-# # For transfering normal distribution parameters cleanly
-# # TODO: There might be a better way to do this in python?
-# NormalDistDTO = namedtuple('NormalDist', 'mean standard_deviation')
 
 class Disease:
     """Represents a Disease for the SIR Model
