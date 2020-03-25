@@ -53,12 +53,6 @@ if __name__ == "__main__":
         c.print_counts()
         c.advance_time()
 
-    fn = lambda x,a,b,c: a / (1 + np.exp( -b * (x-c) ))
-    popt, pcov = curve_fit(fn, timeline, infected+recovered, p0=[pop_size, 1, 1])
-    fit = fn(timeline, *popt)
-    print(popt)
-
-
     plt.plot(timeline, susceptible, label='susceptible')
     plt.plot(timeline, infected, label='infected')
     plt.plot(timeline, recovered, label='recovered')
@@ -66,11 +60,3 @@ if __name__ == "__main__":
     plt.legend()
     plt.title(f"SIR Model of '{d.name}' Disease")
     plt.savefig("output/sir.png")
-
-    plt.clf()
-
-    plt.plot(timeline, infected+recovered, label='infected')
-    plt.plot(timeline, fit, label='fit')
-    plt.legend()
-    plt.title("SIR Infected Growth / Exponential Growth")
-    plt.savefig('output/exp.png')
