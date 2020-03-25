@@ -1,4 +1,4 @@
-from sir import Community, Disease, NormalDistDTO, SIR_Status
+from sir import Community, Disease, SIR_Status
 import numpy as np
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
@@ -29,8 +29,8 @@ if __name__ == "__main__":
     d = Disease(
         infection_rate=infection_rate,
         mortality_rate=mortality_rate,
-        incubation_period_dist=NormalDistDTO(avg_incubation_period, stddev_incubation_period),
-        illness_period_dist=NormalDistDTO(avg_illness_period, stddev_illness_period),
+        incubation_period_dist=(avg_incubation_period, stddev_incubation_period),
+        illness_period_dist=(avg_illness_period, stddev_illness_period),
         name="Uh Oh Me No Feel Good")
     c.init_infected(1, d)
 

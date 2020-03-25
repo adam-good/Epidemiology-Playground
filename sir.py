@@ -1,4 +1,4 @@
-from collections import namedtuple
+# from collections import namedtuple
 
 import numpy as np
 from numpy.random import normal, uniform, poisson, geometric, choice
@@ -12,9 +12,9 @@ class SIR_Status:
     RECOVERED = 2
     DEAD = 3
 
-# For transfering normal distribution parameters cleanly
-# TODO: There might be a better way to do this in python?
-NormalDistDTO = namedtuple('NormalDist', 'mean standard_deviation')
+# # For transfering normal distribution parameters cleanly
+# # TODO: There might be a better way to do this in python?
+# NormalDistDTO = namedtuple('NormalDist', 'mean standard_deviation')
 
 class Disease:
     """Represents a Disease for the SIR Model
@@ -22,8 +22,8 @@ class Disease:
     Arguments:
         infection_rate {float} -- The probability of the disease being transferred in one interaction
         lethality_rate {float} -- The probability of an infected person will die on a given day of infection
-        incubation_period_dist {NormaldistDTO} -- Parameters of the Normal Distribution of which the incubation period is sampled
-        illness_period_dist {NormalDistDTO} -- Parameters of the Normal Distribution of which the illness period is sampled
+        incubation_period_dist {tuple(float, float)} -- The mean and standard deviation of the Normal Distribution of which the incubation period is sampled
+        illness_period_dist {tuple(float, float)} -- The mean and standard deviation of the Normal Distribution of which the illness period is sampled
     
     Keyword Arguments:
         name {string} -- The name of the disease (default: {None})
@@ -54,7 +54,8 @@ class Disease:
         return self._get_period(self.illness_period_dist)
 
     def _get_period(self, distribution):
-        period = normal(distribution.mean, distribution.standard_deviation)
+        mean, stdev = distribution
+        period = normal(mean, stdev)
         if period < 0: period = 0
         return period
 
