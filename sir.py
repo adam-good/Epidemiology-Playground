@@ -96,7 +96,6 @@ class Infection:
         """
         return self.incubation_period + self.illness_period
 
-
 class Person:
     """Represents an individual person in the SIR model
     
@@ -175,6 +174,13 @@ class Person:
             return False
 
 class Community:
+    """A localized group of people
+
+    Arguments:
+        avg_ineractions {float} -- Average number of infectious interactions per person per day
+        stdev_interactions {float} -- Standard deviation of infectious interactions per person per day
+        size {int} -- Number of people initially in the community
+    """
     def __init__(self, avg_ineractions, stdev_interactions, size):
         self.avg_ineractions = avg_ineractions
         self.stdev_interactions = stdev_interactions
