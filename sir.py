@@ -2,7 +2,7 @@ import numpy as np
 from numpy.random import normal, uniform, poisson, geometric, choice
 
 
-class SIR_Status:
+class SIRStatus:
     """Enumerable type for representing a person's state in the simulation
     """
     SUSCEPTIBLE = 0
@@ -10,6 +10,8 @@ class SIR_Status:
     RECOVERED = 2
     DEAD = 3
 
+# TODO: lethality_rate/mortality_rate needs to e redefined
+# TODO: if we're making this sim OO the distributions should just be types
 class Disease:
     """Represents a Disease for the SIR Model
         
@@ -23,13 +25,14 @@ class Disease:
         name {string} -- The name of the disease (default: {None})
     """
 
-    def __init__(self, infection_rate, mortality_rate, incubation_period_dist, illness_period_dist, name=None):
-        self.infection_rate = infection_rate
-        self.mortality_rate = mortality_rate
-        self.incubation_period_dist = incubation_period_dist
-
-        self.illness_period_dist = illness_period_dist
-        self.name = name
+    def __init__(self, infection_rate: float, mortality_rate: float,
+                 incubation_period_dist: tuple[float,float], illness_period_dist: tuple[float,float],
+                 name: str | None = None):
+        self.infection_rate: float = infection_rate
+        self.mortality_rate: float = mortality_rate
+        self.incubation_period_dist: tuple[float,float] = incubation_period_dist
+        self.illness_period_dist: tuple[float,float] = illness_period_dist
+        self.name: str | None = name
 
     def get_incubation_period(self):
         """Sample's the incubation period distribution
@@ -56,7 +59,7 @@ class Disease:
 class Infection:
     """Couples disease to person when person gets sick and tracks disease progression
     """
-    class Infection_State:
+    class InfectionState:
         """Enumerable type for representing a state in the infection
         """
         INCUBATION = 0
@@ -64,16 +67,16 @@ class Infection:
         FINISHED = 2
 
     def __init__(self, person, disease):
-        self.person = person
-        self.disease = disease
-        self.incubation_period = poisson(self.disease.get_incubation_period())
-        self.illness_period = poisson(self.disease.get_illness_period()) + 1 # shift one so we can't be sick for 0 days. It's a cheap hack, I know...probably messes up the math!
+        self.person: Person = person
+        self.disease: Disease = disease
+        self.incubation_period: int = poisson(self.disease.get_incubation_period())
+        self.illness_period: int = poisson(self.disease.get_illness_period()) + 1 # shift one so we can't be sick for 0 days. It's a cheap hack, I know...probably messes up the math!
 
         # Solving for event success probability given cumulative probability of death over illness time (using geometric distribution)
         # https://math.stackexchange.com/questions/2161184/solving-for-the-cdf-of-the-geometric-probability-distribution
-        self.daily_mortality = 1 - np.exp( np.log(1 - self.disease.mortality_rate) / self.illness_period )
+        self.daily_mortality: float = 1 - np.exp( np.log(1 - self.disease.mortality_rate) / self.illness_period )
 
-        self.status = Infection.Infection_State.INCUBATION
+        self.status: self.InfectionState = Infection.Infection_State.INCUBATION
 
     def advance_infection(self):
         """Advance the progress of the infection
@@ -96,6 +99,7 @@ class Infection:
         """
         return self.incubation_period + self.illness_period
 
+# TODO: Again, probability distributions can be abstracted
 class Person:
     """Represents an individual person in the SIR model
     
@@ -103,43 +107,49 @@ class Person:
         avg_inter {float} -- Average interactions this person has per day
         stdev_inter {float} -- Standard deviation of interactions this person has per day
     """
-    def __init__(self, avg_inter, stdev_inter):
-        self.avg_interactions = normal(loc=avg_inter, scale=stdev_inter)
-        if self.avg_interactions < 0: self.avg_interactions = 0
-        self.disease = None
-        self.infection = None
-        self.status = SIR_Status.SUSCEPTIBLE
+    def __init__(self, avg_inter: float, stdev_inter: float):
+        self.avg_interactions: float = normal(loc=avg_inter, scale=stdev_inter)
+        if self.avg_interactions < 0: # TODO: This is hacky. Fix this
+            self.avg_interactions = 0
 
-    def update_interactions(self, avg_inter, stdev_inter):
+        # TODO: Do we reall need the disease and infection seperately tied to person?
+        # Infection could contain disease
+        self.disease: Disease | None = None
+        self.infection: Infection | None = None
+        
+        self.status: SIRStatus = SIRStatus.SUSCEPTIBLE
+
+    # TODO: Abstract Distribution
+    def update_interactions(self, avg_inter: float, stdev_inter: float):
         """Change the parameters of the interaction
         
         Arguments:
             avg_inter {float} -- Average interactions this person will have per day
             stdev_inter {float} -- Standard deviation of interactions this person has per day
         """
-        self.avg_interactions = normal(avg_inter, stdev_inter)
+        self.avg_interactions: float = normal(avg_inter, stdev_inter)
 
-    def interact(self, person):
+    def interact(self, person: Person):
         """Simulates a "sneeze" where this person has the oppertunity to spread their disease to someone else, if infected
         
         Arguments:
             person {Person} -- The person who could recieve the disease
         """
         if self.is_infected() and person.is_susceptible():
-            r = uniform()
+            r: float = uniform()
             if r < self.disease.infection_rate:
                 person.infect(self.disease)
 
-    def infect(self, disease):
+    def infect(self, disease: Disease):
         """Infect this person with the given disease. This will change the person's state to INFECTED and calculate the time periods of this person's infection
         
         Arguments:
             disease {Disease} -- The disease that this person shall be infected with.
         """
-        self.disease = disease
-        self.status = SIR_Status.INFECTED
-        self.infection = Infection(self, disease)
-        self.survival_days = geometric(self.infection.daily_mortality)
+        self.disease: Disease = disease
+        self.status: SIRStatus = SIRStatus.INFECTED
+        self.infection: Infection = Infection(self, disease)
+        self.survival_days: float = geometric(self.infection.daily_mortality) # NOTE: Man I was smarter back then. I don't remember this
 
     def advance_condition(self):
         """Advance the Person's condition in the simulation
@@ -150,29 +160,33 @@ class Person:
             if self.infection.status == Infection.Infection_State.ILLNESS:
                 self.survival_days -= 1
                 if self.survival_days <= 0:
-                    self.status = SIR_Status.DEAD
+                    self.status = SIRStatus.DEAD
             elif self.infection.status == Infection.Infection_State.FINISHED:
-                self.status = SIR_Status.RECOVERED
+                self.status = SIRStatus.RECOVERED
                 self.infection = None
 
+    # TODO: Refactor
     def is_susceptible(self):
-        if self.status == SIR_Status.SUSCEPTIBLE:
+        if self.status == SIRStatus.SUSCEPTIBLE:
             return True
         else:
             return False
 
+    # TODO: Refactor
     def is_infected(self):
-        if self.status == SIR_Status.INFECTED:
+        if self.status == SIRStatus.INFECTED:
             return True
         else:
             return False
 
+    # TODO: Refactor
     def is_ill(self):
-        if self.status == SIR_Status.INFECTED and self.infection.status == Infection.Infection_State.ILLNESS:
+        if self.status == SIRStatus.INFECTED and self.infection.status == Infection.Infection_State.ILLNESS:
             return True
         else:
             return False
 
+# TODO: Abstract stat distributions here too
 class Community:
     """A localized group of people
 
@@ -181,14 +195,14 @@ class Community:
         stdev_interactions {float} -- Standard deviation of infectious interactions per person per day
         size {int} -- Number of people initially in the community
     """
-    def __init__(self, avg_ineractions, stdev_interactions, size):
-        self.avg_ineractions = avg_ineractions
-        self.stdev_interactions = stdev_interactions
-        self.size = size
+    def __init__(self, avg_ineractions: float, stdev_interactions: float, size: int):
+        self.avg_ineractions: float = avg_ineractions
+        self.stdev_interactions: float = stdev_interactions
+        self.size: int = size
 
-        self.people = [Person(self.avg_ineractions, self.stdev_interactions) for _ in range(self.size)]
+        self.people: list[Person] = [Person(self.avg_ineractions, self.stdev_interactions) for _ in range(self.size)]
 
-    def init_infected(self, num, disease):
+    def init_infected(self, num: int, disease: Disease):
         """Initialize some number of people in the population to be infected
         
         Arguments:
@@ -199,13 +213,14 @@ class Community:
         for p in infected:
             p.infect(disease)
 
+    # TODO: Should this be part of the commuity?
     def advance_time(self):
         """Advance the community state with respect to time
             (i.e. infections, recoveries, etc.)
         """
         sample = choice(self.people, size=self.size, replace=False)
-        self.interact([p for p in sample if p.status != SIR_Status.DEAD])
-        self.advance_conditions([p for p in sample if p.status == SIR_Status.INFECTED])
+        self.interact([p for p in sample if p.status != SIRStatus.DEAD])
+        self.advance_conditions([p for p in sample if p.status == SIRStatus.INFECTED])
 
     def interact(self, sample):
         """Perform interactions among the people in the sample
