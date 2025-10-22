@@ -6,27 +6,28 @@ import matplotlib.pyplot as plt
 np.random.seed(8675309)
 
 if __name__ == "__main__":
-    timesteps = 60
-    healthcare_capacity = 200
+    timesteps: int = 60
+    healthcare_capacity: int = 200
 
     # Population Parameters
-    mean_interactions = 5
-    stdev_interactions = 1
-    pop_size=500
+    mean_interactions: float = 5.0
+    stdev_interactions:float = 1.0
+    pop_size: int = 500
 
     # Disease Parameters
-    infection_rate = 0.054
-    mortality_rate = 0.025
-    avg_incubation_period = 5.1
-    stddev_incubation_period = 2.13
-    avg_illness_period = 5
-    stddev_illness_period = 1
+    infection_rate: float = 0.054
+    mortality_rate: float = 0.025
+    avg_incubation_period: float = 5.1
+    stddev_incubation_period: float = 2.13
+    avg_illness_period: float = 5.0
+    stddev_illness_period: float = 1.0
 
-    c = Community(
+    # TODO: Better naming
+    c: Community = Community(
         avg_ineractions=mean_interactions,
         stdev_interactions=stdev_interactions,
         size=pop_size)
-    d = Disease(
+    d: Disease = Disease(
         infection_rate=infection_rate,
         mortality_rate=mortality_rate,
         incubation_period_dist=(avg_incubation_period, stddev_incubation_period),
@@ -40,11 +41,6 @@ if __name__ == "__main__":
     timeline = range(timesteps)
 
     for i in range(timesteps):
-#        if i == 20:
-#            for p in c.people:
-#                p.update_interactions(avg_inter=1.85, stdev_inter=0.5)
-                # p.update_interaction(avg_inter=3, stdev_inter=0.75)
-
         susceptible[i] = len([p for p in c.people if p.status == SIRStatus.SUSCEPTIBLE])
         infected[i] = len([p for p in c.people if p.status == SIRStatus.INFECTED])
         recovered[i] = len([p for p in c.people if p.status == SIRStatus.RECOVERED])
