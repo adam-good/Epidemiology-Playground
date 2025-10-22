@@ -1,5 +1,6 @@
 import numpy as np
-from numpy.random import normal, uniform, poisson, geometric, choice
+#from numpy.random import normal, uniform, poisson, geometric, choice
+from numpy.random import choice
 from distributions import Distribution, PoissonDist
 
 
@@ -105,13 +106,12 @@ class Person:
     """Represents an individual person in the SIR model
     
     Arguments:
-        avg_inter {float} -- Average interactions this person has per day
-        stdev_inter {float} -- Standard deviation of interactions this person has per day
+        interaction_dist: {float} -- Average social interactions per timestep
     """
-    def __init__(self, avg_inter: float, stdev_inter: float):
-        self.avg_interactions: float = normal(loc=avg_inter, scale=stdev_inter)
-        if self.avg_interactions < 0: # TODO: This is hacky. Fix this
-            self.avg_interactions = 0
+    def __init__(self, avg_interactions: float):
+        self.avg_interactions: float = avg_interactions
+        if self.avg_interactions < 0: # TODO: This is hacky. Fix this by requiring a proper distribution
+            self.avg_interactions = 0.0
 
         # TODO: Do we reall need the disease and infection seperately tied to person?
         # Infection could contain disease
@@ -121,23 +121,22 @@ class Person:
         self.status: SIRStatus = SIRStatus.SUSCEPTIBLE
 
     # TODO: Abstract Distribution
-    def update_interactions(self, avg_inter: float, stdev_inter: float):
+    def update_interactions(self, avg_interactions: float):
         """Change the parameters of the interaction
         
         Arguments:
-            avg_inter {float} -- Average interactions this person will have per day
-            stdev_inter {float} -- Standard deviation of interactions this person has per day
+            interaction_dist: {float} -- Average social interactions per timestep
         """
-        self.avg_interactions: float = normal(avg_inter, stdev_inter)
+        self.avg_interactions: float = avg_interactions
 
-    def interact(self, person: Person):
+    def interact(self, person):
         """Simulates a "sneeze" where this person has the oppertunity to spread their disease to someone else, if infected
         
         Arguments:
             person {Person} -- The person who could recieve the disease
         """
         if self.is_infected() and person.is_susceptible():
-            r: float = uniform()
+            r: float = np.random.uniform()
             if r < self.disease.infection_rate:
                 person.infect(self.disease)
 
@@ -150,7 +149,8 @@ class Person:
         self.disease: Disease = disease
         self.status: SIRStatus = SIRStatus.INFECTED
         self.infection: Infection = Infection(self, disease)
-        self.survival_days: float = geometric(self.infection.daily_mortality) # NOTE: Man I was smarter back then. I don't remember this
+        # TODO: Figure out what is happening here. I was smarter 5 years ago I guess
+        self.survival_days: float = np.random.geometric(self.infection.daily_mortality) # NOTE: Man I was smarter back then. I don't remember this
 
     def advance_condition(self):
         """Advance the Person's condition in the simulation
@@ -192,16 +192,13 @@ class Community:
     """A localized group of people
 
     Arguments:
-        avg_ineractions {float} -- Average number of infectious interactions per person per day
-        stdev_interactions {float} -- Standard deviation of infectious interactions per person per day
+        interaction_dist: {Distribution} -- The Distribution of average interactions per timestep of people in the community
         size {int} -- Number of people initially in the community
     """
-    def __init__(self, avg_ineractions: float, stdev_interactions: float, size: int):
-        self.avg_ineractions: float = avg_ineractions
-        self.stdev_interactions: float = stdev_interactions
+    def __init__(self, interaction_dist: Distribution, size: int):
+        self.interaction_dist: Distribution = interaction_dist
         self.size: int = size
-
-        self.people: list[Person] = [Person(self.avg_ineractions, self.stdev_interactions) for _ in range(self.size)]
+        self.people: list[Person] = [Person(self.interaction_dist.sample()) for _ in range(self.size)]
 
     def init_infected(self, num: int, disease: Disease):
         """Initialize some number of people in the population to be infected
