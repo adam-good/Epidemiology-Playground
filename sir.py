@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.random import normal, uniform, poisson, geometric, choice
+from distributions import Distribution, PoissonDist
 
 
 class SIRStatus:
@@ -18,20 +19,20 @@ class Disease:
     Arguments:
         infection_rate {float} -- The probability of the disease being transferred in one interaction
         lethality_rate {float} -- The probability of an infected person will die on a given day of infection
-        incubation_period_dist {tuple(float, float)} -- The mean and standard deviation of the Normal Distribution of which the incubation period is sampled
-        illness_period_dist {tuple(float, float)} -- The mean and standard deviation of the Normal Distribution of which the illness period is sampled
+        incubation_period_dist {Distribution} -- The statistical distribution of possible incubation periods
+        illness_period_dist {Distribution} -- The statistical distribution of possible illness periods
     
     Keyword Arguments:
         name {string} -- The name of the disease (default: {None})
     """
 
     def __init__(self, infection_rate: float, mortality_rate: float,
-                 incubation_period_dist: tuple[float,float], illness_period_dist: tuple[float,float],
+                 incubation_period_dist: Distribution, illness_period_dist: Distribution,
                  name: str | None = None):
         self.infection_rate: float = infection_rate
         self.mortality_rate: float = mortality_rate
-        self.incubation_period_dist: tuple[float,float] = incubation_period_dist
-        self.illness_period_dist: tuple[float,float] = illness_period_dist
+        self.incubation_period_dist: Distribution = incubation_period_dist
+        self.illness_period_dist:  Distribution = illness_period_dist
         self.name: str | None = name
 
     def get_incubation_period(self):
@@ -51,9 +52,9 @@ class Disease:
         return self._get_period(self.illness_period_dist)
 
     def _get_period(self, distribution):
-        mean, stdev = distribution
-        period = normal(mean, stdev)
-        if period < 0: period = 0
+        period: float = distribution.sample()
+        if period < 0: # TODO: This is hacky. Needs to be a better distribution
+            period = 0
         return period
 
 class Infection:
@@ -69,8 +70,8 @@ class Infection:
     def __init__(self, person, disease):
         self.person: Person = person
         self.disease: Disease = disease
-        self.incubation_period: int = poisson(self.disease.get_incubation_period())
-        self.illness_period: int = poisson(self.disease.get_illness_period()) + 1 # shift one so we can't be sick for 0 days. It's a cheap hack, I know...probably messes up the math!
+        self.incubation_period: int = PoissonDist(self.disease.get_incubation_period()).sample()
+        self.illness_period: int = PoissonDist(self.disease.get_illness_period()).sample()
 
         # Solving for event success probability given cumulative probability of death over illness time (using geometric distribution)
         # https://math.stackexchange.com/questions/2161184/solving-for-the-cdf-of-the-geometric-probability-distribution
