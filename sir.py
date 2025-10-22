@@ -76,20 +76,20 @@ class Infection:
         # https://math.stackexchange.com/questions/2161184/solving-for-the-cdf-of-the-geometric-probability-distribution
         self.daily_mortality: float = 1 - np.exp( np.log(1 - self.disease.mortality_rate) / self.illness_period )
 
-        self.status: self.InfectionState = Infection.Infection_State.INCUBATION
+        self.status: self.InfectionState = Infection.InfectionState.INCUBATION
 
     def advance_infection(self):
         """Advance the progress of the infection
         """
-        if self.status == Infection.Infection_State.INCUBATION:
+        if self.status == Infection.InfectionState.INCUBATION:
             self.incubation_period -= 1
             if self.incubation_period <= 0:
-                self.status = Infection.Infection_State.ILLNESS
+                self.status = Infection.InfectionState.ILLNESS
 
-        elif self.status == Infection.Infection_State.ILLNESS:
+        elif self.status == Infection.InfectionState.ILLNESS:
             self.illness_period -= 1
             if self.illness_period <= 0:
-                self.status = Infection.Infection_State.FINISHED
+                self.status = Infection.InfectionState.FINISHED
 
     def get_recovery_time(self):
         """Calculate Remaining Time Until Infection is Over (disregarding death)
@@ -157,11 +157,11 @@ class Person:
         if self.is_infected(): 
             self.infection.advance_infection()
 
-            if self.infection.status == Infection.Infection_State.ILLNESS:
+            if self.infection.status == Infection.InfectionState.ILLNESS:
                 self.survival_days -= 1
                 if self.survival_days <= 0:
                     self.status = SIRStatus.DEAD
-            elif self.infection.status == Infection.Infection_State.FINISHED:
+            elif self.infection.status == Infection.InfectionState.FINISHED:
                 self.status = SIRStatus.RECOVERED
                 self.infection = None
 
@@ -181,7 +181,7 @@ class Person:
 
     # TODO: Refactor
     def is_ill(self):
-        if self.status == SIRStatus.INFECTED and self.infection.status == Infection.Infection_State.ILLNESS:
+        if self.status == SIRStatus.INFECTED and self.infection.status == Infection.InfectionState.ILLNESS:
             return True
         else:
             return False
@@ -222,14 +222,14 @@ class Community:
         self.interact([p for p in sample if p.status != SIRStatus.DEAD])
         self.advance_conditions([p for p in sample if p.status == SIRStatus.INFECTED])
 
-    def interact(self, sample):
+    def interact(self, sample: list[Person]):
         """Perform interactions among the people in the sample
         
         Arguments:
             sample {list} -- A list of people to interact with each other
         """
         for p in sample:
-            n_interactions = poisson(p.avg_interactions)
+            n_interactions: int = poisson(p.avg_interactions)
             interactions = choice(
                 a = [x for x in sample if x != p],
                 size=n_interactions,
@@ -238,7 +238,7 @@ class Community:
             for i in interactions:
                 p.interact(i)
 
-    def advance_conditions(self, sample):
+    def advance_conditions(self, sample: list[Person]):
         """Advances the condition of each person in sample
         
         Arguments:
@@ -250,10 +250,10 @@ class Community:
     def print_counts(self):
         """Prints number of people currently in each state
         """
-        susceptible = len([p for p in self.people if p.status == SIR_Status.SUSCEPTIBLE])
-        infected = len([p for p in self.people if p.status == SIR_Status.INFECTED])
-        recovered = len([p for p in self.people if p.status == SIR_Status.RECOVERED])
-        dead = len([p for p in self.people if p.status == SIR_Status.DEAD])
+        susceptible: list[Person] = len([p for p in self.people if p.status == SIRStatus.SUSCEPTIBLE])
+        infected: list[Person]= len([p for p in self.people if p.status == SIRStatus.INFECTED])
+        recovered: list[Person] = len([p for p in self.people if p.status == SIRStatus.RECOVERED])
+        dead: list[Person] = len([p for p in self.people if p.status == SIRStatus.DEAD])
 
         print(f'Susceptible  : {susceptible}')
         print(f'Infected     : {infected}')

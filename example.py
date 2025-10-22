@@ -1,6 +1,6 @@
-from sir import Community, Disease, SIR_Status
+from sir import Community, Disease, SIRStatus
 import numpy as np
-from scipy.optimize import curve_fit
+#from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 
 np.random.seed(8675309)
@@ -45,9 +45,9 @@ if __name__ == "__main__":
 #                p.update_interactions(avg_inter=1.85, stdev_inter=0.5)
                 # p.update_interaction(avg_inter=3, stdev_inter=0.75)
 
-        susceptible[i] = len([p for p in c.people if p.status == SIR_Status.SUSCEPTIBLE])
-        infected[i] = len([p for p in c.people if p.status == SIR_Status.INFECTED])
-        recovered[i] = len([p for p in c.people if p.status == SIR_Status.RECOVERED])
+        susceptible[i] = len([p for p in c.people if p.status == SIRStatus.SUSCEPTIBLE])
+        infected[i] = len([p for p in c.people if p.status == SIRStatus.INFECTED])
+        recovered[i] = len([p for p in c.people if p.status == SIRStatus.RECOVERED])
 
         print(f"Iteration {i}")
         c.print_counts()
