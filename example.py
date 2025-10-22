@@ -1,6 +1,5 @@
 from sir import Community, Disease, SIRStatus
 import numpy as np
-#from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 
 np.random.seed(8675309)
