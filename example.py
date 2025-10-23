@@ -1,6 +1,7 @@
 from sir import Community, Disease, SIRStatus
 import numpy as np
 import matplotlib.pyplot as plt
+from distributions import Distribution, NormalDist
 
 np.random.seed(8675309)
 
@@ -21,16 +22,20 @@ if __name__ == "__main__":
     avg_illness_period: float = 5.0
     stddev_illness_period: float = 1.0
 
+    # Statistical Distributions
+    interaction_dist: Distribution = NormalDist(mean_interactions, stdev_interactions)
+    incubation_period_dist: Distribution = NormalDist(avg_incubation_period, stddev_incubation_period)
+    illness_period_dist: Distribution = NormalDist(avg_illness_period, stddev_illness_period)
+
     # TODO: Better naming
     c: Community = Community(
-        avg_ineractions=mean_interactions,
-        stdev_interactions=stdev_interactions,
+        interaction_dist=interaction_dist,
         size=pop_size)
     d: Disease = Disease(
         infection_rate=infection_rate,
         mortality_rate=mortality_rate,
-        incubation_period_dist=(avg_incubation_period, stddev_incubation_period),
-        illness_period_dist=(avg_illness_period, stddev_illness_period),
+        incubation_period_dist=incubation_period_dist,
+        illness_period_dist=illness_period_dist,
         name="Uh Oh Me No Feel Good")
     c.init_infected(1, d)
 

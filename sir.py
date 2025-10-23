@@ -220,6 +220,7 @@ class Community:
         self.interact([p for p in sample if p.status != SIRStatus.DEAD])
         self.advance_conditions([p for p in sample if p.status == SIRStatus.INFECTED])
 
+    # TODO: This method needs reworked
     def interact(self, sample: list[Person]):
         """Perform interactions among the people in the sample
         
@@ -227,7 +228,7 @@ class Community:
             sample {list} -- A list of people to interact with each other
         """
         for p in sample:
-            n_interactions: int = poisson(p.avg_interactions)
+            n_interactions: int = np.random.poisson(p.avg_interactions)
             interactions = choice(
                 a = [x for x in sample if x != p],
                 size=n_interactions,
@@ -248,10 +249,10 @@ class Community:
     def print_counts(self):
         """Prints number of people currently in each state
         """
-        susceptible: list[Person] = len([p for p in self.people if p.status == SIRStatus.SUSCEPTIBLE])
-        infected: list[Person]= len([p for p in self.people if p.status == SIRStatus.INFECTED])
-        recovered: list[Person] = len([p for p in self.people if p.status == SIRStatus.RECOVERED])
-        dead: list[Person] = len([p for p in self.people if p.status == SIRStatus.DEAD])
+        susceptible: int = len([p for p in self.people if p.status == SIRStatus.SUSCEPTIBLE])
+        infected: int = len([p for p in self.people if p.status == SIRStatus.INFECTED])
+        recovered: int = len([p for p in self.people if p.status == SIRStatus.RECOVERED])
+        dead: int = len([p for p in self.people if p.status == SIRStatus.DEAD])
 
         print(f'Susceptible  : {susceptible}')
         print(f'Infected     : {infected}')
