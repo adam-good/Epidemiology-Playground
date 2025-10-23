@@ -1,5 +1,5 @@
 #from numpy.random import normal, uniform, poisson, geometric, choice
-from numpy.random import normal, uniform, poisson
+from numpy.random import normal, uniform, poisson, binomial
 
 class Distribution:
     def __init__(self):
@@ -33,3 +33,12 @@ class PoissonDist(Distribution):
 
     def sample(self):
         return poisson(self.lam)
+
+class BinomialDist(Distribution):
+    def __init__(self, n: int, p: float):
+        super().__init__()
+        self.n = n
+        self.p = p
+
+    def sample(self):
+        return binomial(self.n, self.p)

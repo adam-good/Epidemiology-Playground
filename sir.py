@@ -18,45 +18,38 @@ class Disease:
     """Represents a Disease for the SIR Model
         
     Arguments:
-        infection_rate {float} -- The probability of the disease being transferred in one interaction
-        lethality_rate {float} -- The probability of an infected person will die on a given day of infection
-        incubation_period_dist {Distribution} -- The statistical distribution of possible incubation periods
-        illness_period_dist {Distribution} -- The statistical distribution of possible illness periods
+        infection_rate {float} -- Average rate of infection
+        lethality_dist {float} -- Average rate of lethality
+        incubation_period {float} -- Average incubation period
+        illness_period_dist {float} -- Average illness period
     
     Keyword Arguments:
         name {string} -- The name of the disease (default: {None})
     """
 
     def __init__(self, infection_rate: float, mortality_rate: float,
-                 incubation_period_dist: Distribution, illness_period_dist: Distribution,
+                 incubation_period: float, illness_period: float,
                  name: str | None = None):
-        self.infection_rate: float = infection_rate
-        self.mortality_rate: float = mortality_rate
-        self.incubation_period_dist: Distribution = incubation_period_dist
-        self.illness_period_dist:  Distribution = illness_period_dist
+        self._infection_rate: float = infection_rate
+        self._mortality_rate: float = mortality_rate
+        self._incubation_period: float = incubation_period
+        self._illness_period:  float = illness_period
         self.name: str | None = name
 
-    def get_incubation_period(self):
-        """Sample's the incubation period distribution
-        
+    def get_incubation_period(self) -> float:
+        """The Disease's Average Incubation Period        
         Returns:
             float -- An average incubation period
         """
-        return self._get_period(self.incubation_period_dist)
+        return self._incubation_period
 
-    def get_illness_period(self):
+    def get_illness_period(self) -> float:
         """Sample's the illness period distribution
         
         Returns:
             float -- An average illness period
         """
-        return self._get_period(self.illness_period_dist)
-
-    def _get_period(self, distribution):
-        period: float = distribution.sample()
-        if period < 0: # TODO: This is hacky. Needs to be a better distribution
-            period = 0
-        return period
+        return self._illness_period
 
 class Infection:
     """Couples disease to person when person gets sick and tracks disease progression
