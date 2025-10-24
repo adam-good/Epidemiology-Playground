@@ -9,33 +9,15 @@ if __name__ == "__main__":
     timesteps: int = 60
     healthcare_capacity: int = 200
 
-    # Population Parameters
-    mean_interactions: float = 5.0
-    stdev_interactions:float = 1.0
-    pop_size: int = 500
-
-    # Disease Parameters
-    infection_rate: float = 0.054
-    mortality_rate: float = 0.025
-    avg_incubation_period: float = 5.1
-    stddev_incubation_period: float = 2.13
-    avg_illness_period: float = 5.0
-    stddev_illness_period: float = 1.0
-
-    # Statistical Distributions
-    interaction_dist: Distribution = NormalDist(mean_interactions, stdev_interactions)
-    incubation_period_dist: Distribution = NormalDist(avg_incubation_period, stddev_incubation_period)
-    illness_period_dist: Distribution = NormalDist(avg_illness_period, stddev_illness_period)
-
     # TODO: Better naming
     c: Community = Community(
-        interaction_dist=interaction_dist,
-        size=pop_size)
+        interaction_dist=NormalDist(mean=5.0, stdev=1.0),
+        size=500)
     d: Disease = Disease(
-        infection_rate=infection_rate,
-        mortality_rate=mortality_rate,
-        incubation_period_dist=incubation_period_dist,
-        illness_period_dist=illness_period_dist,
+        infection_rate=0.054,
+        case_fatality_rate=0.025,
+        incubation_period=5.1,
+        illness_period=5.0,
         name="Uh Oh Me No Feel Good")
     c.init_infected(1, d)
 
